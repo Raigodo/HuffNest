@@ -3,14 +3,12 @@ package com.huffnest;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 
 public class BitWriter {
 
-  public BitWriter() throws IOException {
-    os = Files.newOutputStream(
-      Paths.get("E:\\Projects\\huffnest\\src\\main\\resources\\test2.txt")
-    );
+  public BitWriter(Path path) throws IOException {
+    os = Files.newOutputStream(path);
   }
 
   private OutputStream os;
@@ -27,8 +25,16 @@ public class BitWriter {
       currentByte = 0;
       bitIndex = 0;
     }
+  }
 
-    System.out.println(currentByte);
+  public void pushByte(byte b) throws IOException {
+    if (bitIndex == 0) {
+      writeBuffer(b);
+    } else {
+      for (int i = 7; i >= 0; i--) {
+        pushBit((byte) ((b >> i) & 1));
+      }
+    }
   }
 
   public void close() throws IOException {

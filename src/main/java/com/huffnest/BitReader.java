@@ -3,12 +3,12 @@ package com.huffnest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 
 public class BitReader {
 
-  public BitReader(String path) throws IOException {
-    stream = Files.newInputStream(Paths.get(path));
+  public BitReader(Path path) throws IOException {
+    stream = Files.newInputStream(path);
     fillBuffer();
     currentByte = queue.next();
     isCurrentByteActive = true;
@@ -35,8 +35,15 @@ public class BitReader {
     byte bit = (byte) ((currentByte >> (7 - bitIndex)) & 1);
     bitIndex = (byte) ((bitIndex + 1) % 8);
     if (bitIndex == 0) {
-      currentByte = queue.next();
-      isCurrentByteActive = true;
+      if (queue.size() > 0) {
+        currentByte = queue.next();
+        isCurrentByteActive = true;
+      } else {
+        isCurrentByteActive = false;
+      }
+    }
+    if (queue.size() == 0 && !closed) {
+      fillBuffer();
     }
 
     return bit;
