@@ -1,7 +1,9 @@
 package com.huffnest.bytetree;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ByteTree {
@@ -13,6 +15,10 @@ public class ByteTree {
 
   private ByteTreeNode root;
   private Map<Byte, TreePathDirection[]> navigationMap = new HashMap<>();
+
+  public BreadthFirstByteTreeIterator getIterator() {
+    return new BreadthFirstByteTreeIterator(root);
+  }
 
   public TreePathDirection[] getPathToByte(byte value) {
     return navigationMap.get(value);
@@ -58,5 +64,42 @@ public class ByteTree {
   public enum TreePathDirection {
     LEFT,
     RIGHT,
+  }
+
+  public class BreadthFirstByteTreeIterator {
+
+    public BreadthFirstByteTreeIterator(ByteTreeNode root) {
+      this.currentLevelNodes = new ByteTreeNode[] { root.left, root.right };
+    }
+
+    private ByteTreeNode[] currentLevelNodes;
+    private int index = 0;
+    private List<ByteTreeNode> nextLevelNodes = new ArrayList<>();
+
+    public boolean hasNext() {
+      return (
+        (currentLevelNodes.length > 0 && index < currentLevelNodes.length) ||
+        nextLevelNodes.size() > 0
+      );
+    }
+
+    public ByteTreeNode nextNode() {
+      ByteTreeNode node = currentLevelNodes[index++];
+
+      if (node.left != null) nextLevelNodes.add(node.left);
+      if (node.right != null) nextLevelNodes.add(node.right);
+
+      if (index >= currentLevelNodes.length) {
+        currentLevelNodes = nextLevelNodes.toArray(new ByteTreeNode[0]);
+        nextLevelNodes.clear();
+        index = 0;
+      }
+
+      return node;
+    }
+
+    public byte nextValue() {
+      return nextNode().value;
+    }
   }
 }
