@@ -20,6 +20,10 @@ public class ByteTree {
     return new BreadthFirstByteTreeIterator(root);
   }
 
+  public ManualBreadthFirstByteTreeIterator getManualIterator() {
+    return new ManualBreadthFirstByteTreeIterator(root);
+  }
+
   public TreePathDirection[] getPathToByte(byte value) {
     return navigationMap.get(value);
   }
@@ -33,6 +37,11 @@ public class ByteTree {
     }
 
     return current.value;
+  }
+
+  public void rebuildnavigationMap() {
+    navigationMap.clear();
+    buildNavigationMap(new TreePathDirection[0], root);
   }
 
   private void buildNavigationMap(
@@ -100,6 +109,43 @@ public class ByteTree {
 
     public byte nextValue() {
       return nextNode().value;
+    }
+  }
+
+  public class ManualBreadthFirstByteTreeIterator {
+
+    public ManualBreadthFirstByteTreeIterator(ByteTreeNode root) {
+      this.currentLevelNodes = new ByteTreeNode[] { root };
+    }
+
+    private ByteTreeNode[] currentLevelNodes;
+    private int index = 0;
+
+    public boolean hasNext() {
+      return (
+        currentLevelNodes.length > 0 && index < currentLevelNodes.length - 1
+      );
+    }
+
+    public ByteTreeNode currentNode() {
+      return currentLevelNodes[index];
+    }
+
+    public ByteTreeNode nextNode() {
+      if (!hasNext()) throw new RuntimeException("No more nodes at this level");
+      return currentLevelNodes[index++];
+    }
+
+    public void nextLevel() {
+      List<ByteTreeNode> nextLevelNodes = new ArrayList<>();
+
+      for (ByteTreeNode node : currentLevelNodes) {
+        if (node.left != null) nextLevelNodes.add(node.left);
+        if (node.right != null) nextLevelNodes.add(node.right);
+      }
+
+      currentLevelNodes = nextLevelNodes.toArray(new ByteTreeNode[0]);
+      index = 0;
     }
   }
 }

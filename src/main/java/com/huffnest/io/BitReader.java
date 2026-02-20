@@ -19,7 +19,7 @@ public class BitReader {
   private InputStream stream;
   private BitSpliter bitSpliter = new BitSpliter();
 
-  private static final int BUFFER_SIZE = 10;
+  private static final int BUFFER_SIZE = 100;
   private static final int BUFFER_QUEUE_SIZE = BUFFER_SIZE;
   private byte[] _buffer = new byte[BUFFER_SIZE - 1];
   private byte[] _bufferTemp = null;

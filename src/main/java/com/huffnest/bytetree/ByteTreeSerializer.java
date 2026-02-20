@@ -1,6 +1,6 @@
 package com.huffnest.bytetree;
 
-import com.huffnest.bytetree.ByteTreeFactory.ExistingByteTreeBuilder;
+import com.huffnest.bytetree.ByteTreeFactory.ByteTreeBuilder;
 import com.huffnest.util.BitMerger;
 import java.io.ByteArrayOutputStream;
 
@@ -22,10 +22,10 @@ public class ByteTreeSerializer {
   }
 
   public ByteTree deserialize(byte[] data) {
-    ExistingByteTreeBuilder builder = ByteTreeFactory.Existing();
+    ByteTreeBuilder builder = ByteTreeFactory.Existing();
 
     for (byte b : data) {
-      builder.distributeByte(b);
+      builder.pushByte(b);
     }
 
     return builder.build();

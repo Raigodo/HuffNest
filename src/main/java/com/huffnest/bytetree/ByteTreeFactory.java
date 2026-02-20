@@ -10,15 +10,15 @@ public class ByteTreeFactory {
     return new NewByteTreeBuilder();
   }
 
-  public static ExistingByteTreeBuilder Existing() {
-    return new ExistingByteTreeBuilder();
+  public static ByteTreeBuilder Existing() {
+    return new ByteTreeBuilder();
   }
 
   public static class NewByteTreeBuilder {
 
     private Map<Byte, Integer> frequencyTable = new HashMap<>();
 
-    public void appendNextByte(byte b) {
+    public void pushByte(byte b) {
       frequencyTable.put(b, frequencyTable.getOrDefault(b, 0) + 1);
     }
 
@@ -30,28 +30,46 @@ public class ByteTreeFactory {
         .map(Map.Entry::getKey)
         .toList();
 
-      int index = 0;
+      ByteTreeBuilder byteTreeBuilder = new ByteTreeBuilder();
 
-      ByteTreeNode root = new ByteTreeNode((byte) 0, null);
-
-      for (int i = 0; i < orderedKeys.size(); i++) {
-        root.distribute(orderedKeys.get(index++));
+      for (Byte b : orderedKeys) {
+        byteTreeBuilder.pushByte(b);
       }
 
-      return new ByteTree(root);
+      return byteTreeBuilder.build();
     }
   }
 
-  public static class ExistingByteTreeBuilder {
+  public static class ByteTreeBuilder {
 
-    private ByteTreeNode root = new ByteTreeNode((byte) 0, null);
+    private ByteTree tree = new ByteTree(new ByteTreeNode((byte) 0, null));
+    private ByteTree.ManualBreadthFirstByteTreeIterator iterator =
+      tree.getManualIterator();
 
-    public void distributeByte(byte b) {
-      root.distribute(b);
+    public void pushByte(byte b) {
+      ByteTreeNode node = iterator.currentNode();
+      boolean byteConsumed = tryFeedByteToNode(node, b);
+      if (byteConsumed) return;
+
+      if (!iterator.hasNext()) {
+        iterator.nextLevel();
+      } else byteConsumed = tryFeedByteToNode(iterator.nextNode(), b);
+
+      if (!byteConsumed) {
+        pushByte(b);
+      }
+    }
+
+    private boolean tryFeedByteToNode(ByteTreeNode node, byte b) {
+      if (node.left == null) node.left = new ByteTreeNode(b, node);
+      else if (node.right == null) node.right = new ByteTreeNode(b, node);
+      else return false;
+      return true;
     }
 
     public ByteTree build() {
-      return new ByteTree(root);
+      tree.rebuildnavigationMap();
+      return tree;
     }
   }
 }

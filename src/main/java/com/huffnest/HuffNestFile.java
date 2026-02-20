@@ -8,7 +8,6 @@ import com.huffnest.io.BitReader;
 import com.huffnest.io.BitWriter;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,8 +28,10 @@ public class HuffNestFile {
 
     ByteTreeFactory.NewByteTreeBuilder builder = ByteTreeFactory.New();
 
+    System.out.println("Building tree...");
+
     while (br.hasNextByte()) {
-      builder.appendNextByte(br.nextByte());
+      builder.pushByte(br.nextByte());
     }
 
     ByteTree tree = builder.build();
@@ -51,6 +52,7 @@ public class HuffNestFile {
     // bw.pushInt(0);
 
     br = new BitReader(inputFilePath);
+    System.out.println("Compressing file...");
 
     while (br.hasNextByte()) {
       byte b = br.nextByte();
@@ -76,12 +78,14 @@ public class HuffNestFile {
     int iterationsLeft = br.nextInt();
 
     byte[] serializedTree = new byte[treeSize];
+
     for (int i = 0; i < treeSize; i++) {
       serializedTree[i] = br.nextByte();
     }
 
     ByteTree tree = new ByteTreeSerializer().deserialize(serializedTree);
 
+    System.out.println("Decompressing file...");
     writeLoop: while (br.hasNextBit()) {
       List<TreePathDirection> path = new ArrayList<>();
       while (true) {
@@ -95,7 +99,8 @@ public class HuffNestFile {
           break;
         }
       }
-      byte value = tree.getByteAtPath(
+      byte value;
+      value = tree.getByteAtPath(
         (TreePathDirection[]) path.toArray(new TreePathDirection[0])
       );
       bw.pushByte(value);
