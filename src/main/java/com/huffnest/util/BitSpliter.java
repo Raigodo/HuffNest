@@ -16,6 +16,13 @@ public class BitSpliter {
     return (isCurrentByteActive && bitIndex == 0) || buffer.size() > 0;
   }
 
+  public boolean hasNextInt() {
+    return (
+      (isCurrentByteActive && bitIndex == 0 && buffer.size() >= 3) ||
+      buffer.size() >= 4
+    );
+  }
+
   public void pushByte(byte value) {
     buffer.add(value);
   }

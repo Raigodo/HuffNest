@@ -28,6 +28,13 @@ public class BitWriter {
     writeBuffer(bitMerger.getByte());
   }
 
+  public void pushInt(int value) throws IOException {
+    pushByte((byte) (value >>> 24));
+    pushByte((byte) (value >>> 16));
+    pushByte((byte) (value >>> 8));
+    pushByte((byte) value);
+  }
+
   public void close() throws IOException {
     while (!bitMerger.isBuildInProgress()) bitMerger.pushBit((byte) 0);
     while (bitMerger.hasByte()) writeBuffer(bitMerger.getByte());

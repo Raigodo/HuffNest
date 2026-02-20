@@ -19,27 +19,31 @@ public class BitReader {
   private InputStream stream;
   private BitSpliter bitSpliter = new BitSpliter();
 
-  private static final int BUFFER_SIZE = 3;
+  private static final int BUFFER_SIZE = 10;
   private static final int BUFFER_QUEUE_SIZE = BUFFER_SIZE;
   private byte[] _buffer = new byte[BUFFER_SIZE - 1];
   private byte[] _bufferTemp = null;
   private ByteRingBuffer queue = new ByteRingBuffer(BUFFER_QUEUE_SIZE);
   private boolean isStreamClosed = false;
 
-  public boolean hasMoreBits() {
+  public boolean hasNextBit() {
     return !isStreamClosed || bitSpliter.hasNextBit();
   }
 
-  public boolean hasMoreBytes() {
+  public boolean hasNextByte() {
     return !isStreamClosed || bitSpliter.hasNextByte();
   }
 
+  public boolean hasNextInt() {
+    return !isStreamClosed || bitSpliter.hasNextInt();
+  }
+
   public byte nextBit() throws IOException {
-    if (!hasMoreBits()) throw new IOException("Stream is closed");
+    if (!hasNextBit()) throw new IOException("Stream is closed");
     byte value = bitSpliter.nextBit();
 
     if (!bitSpliter.hasNextByte()) {
-      if (queue.size() <= 0 && !isStreamClosed) {
+      if (shouldFillBuffer()) {
         fillBuffer();
       }
       if (queue.size() > 0) {
@@ -51,13 +55,26 @@ public class BitReader {
   }
 
   public byte nextByte() throws IOException {
-    if (!hasMoreBytes()) throw new IOException("Stream is closed");
+    if (!hasNextByte()) throw new IOException("Stream is closed");
     byte value = bitSpliter.nextByte();
 
-    if (queue.size() <= 0 && !isStreamClosed) fillBuffer();
+    if (shouldFillBuffer()) fillBuffer();
     if (queue.size() > 0) bitSpliter.pushByte(queue.next());
 
     return value;
+  }
+
+  public int nextInt() throws IOException {
+    int b1 = nextByte() & 0xFF;
+    int b2 = nextByte() & 0xFF;
+    int b3 = nextByte() & 0xFF;
+    int b4 = nextByte() & 0xFF;
+
+    return (b1 << 24) | (b2 << 16) | (b3 << 8) | b4;
+  }
+
+  private boolean shouldFillBuffer() {
+    return queue.size() <= 0 && !isStreamClosed;
   }
 
   private void fillBuffer() throws IOException {
