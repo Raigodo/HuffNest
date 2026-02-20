@@ -1,4 +1,4 @@
-package com.huffnest;
+package com.huffnest.util;
 
 public class ByteRingBuffer {
 

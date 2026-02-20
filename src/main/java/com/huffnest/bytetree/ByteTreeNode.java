@@ -1,4 +1,4 @@
-package com.huffnest;
+package com.huffnest.bytetree;
 
 public class ByteTreeNode {
 

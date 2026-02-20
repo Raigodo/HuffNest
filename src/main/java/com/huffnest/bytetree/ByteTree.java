@@ -1,4 +1,4 @@
-package com.huffnest;
+package com.huffnest.bytetree;
 
 import java.util.Arrays;
 import java.util.HashMap;

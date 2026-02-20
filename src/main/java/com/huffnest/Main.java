@@ -1,6 +1,10 @@
 package com.huffnest;
 
-import com.huffnest.ByteTree.TreePathDirection;
+import com.huffnest.bytetree.ByteTree;
+import com.huffnest.bytetree.ByteTree.TreePathDirection;
+import com.huffnest.bytetree.ByteTreeBuilder;
+import com.huffnest.io.BitReader;
+import com.huffnest.io.BitWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -15,7 +19,7 @@ public class Main {
 
     ByteTreeBuilder builder = new ByteTreeBuilder();
 
-    while (!br.isClosed()) {
+    while (br.hasMoreBytes()) {
       builder.appendNextByte(br.nextByte());
     }
 
@@ -25,12 +29,12 @@ public class Main {
       Paths.get("E:\\Projects\\huffnest\\src\\main\\resources\\test2.txt")
     );
 
-    BitReader br2 = new BitReader(
+    br = new BitReader(
       Paths.get("E:\\Projects\\huffnest\\src\\main\\resources\\test.txt")
     );
 
-    while (!br2.isClosed()) {
-      byte b = br2.nextByte();
+    while (br.hasMoreBytes()) {
+      byte b = br.nextByte();
       TreePathDirection[] path = tree.getPathToByte(b);
 
       for (int i = 0; i < path.length; i++) {
@@ -46,21 +50,22 @@ public class Main {
 
     //retrieve
 
-    BitReader br3 = new BitReader(
+    br = new BitReader(
       Paths.get("E:\\Projects\\huffnest\\src\\main\\resources\\test2.txt")
     );
-    BitWriter bw2 = new BitWriter(
+    bw = new BitWriter(
       Paths.get("E:\\Projects\\huffnest\\src\\main\\resources\\test3.txt")
     );
 
-    writeLoop: while (!br3.isClosed()) {
+    writeLoop: while (br.hasMoreBits()) {
       List<TreePathDirection> path = new ArrayList<>();
       while (true) {
-        if (br3.isClosed()) break writeLoop;
+        if (!br.hasMoreBits()) break writeLoop;
         path.add(
-          br3.nextBit() == 0 ? TreePathDirection.LEFT : TreePathDirection.RIGHT
+          br.nextBit() == 0 ? TreePathDirection.LEFT : TreePathDirection.RIGHT
         );
-        boolean isEndBit = br3.nextBit() == 1 ? true : false;
+        if (!br.hasMoreBits()) break writeLoop;
+        boolean isEndBit = br.nextBit() == 1 ? true : false;
         if (isEndBit) {
           break;
         }
@@ -68,7 +73,7 @@ public class Main {
       byte value = tree.getByteAtPath(
         (TreePathDirection[]) path.toArray(new TreePathDirection[0])
       );
-      bw2.pushByte(value);
+      bw.pushByte(value);
     }
   }
 }

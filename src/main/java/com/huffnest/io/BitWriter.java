@@ -1,5 +1,6 @@
-package com.huffnest;
+package com.huffnest.io;
 
+import com.huffnest.util.BitMerger;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -12,36 +13,24 @@ public class BitWriter {
   }
 
   private OutputStream os;
-  private byte currentByte = 0;
-  private int bitIndex = 0;
+  private BitMerger bitMerger = new BitMerger();
 
   public void pushBit(byte bit) throws IOException {
-    currentByte <<= 1;
-    currentByte += bit;
-    bitIndex++;
+    bitMerger.pushBit(bit);
 
-    if (bitIndex == 8) {
-      writeBuffer(currentByte);
-      currentByte = 0;
-      bitIndex = 0;
+    if (bitMerger.hasByte()) {
+      writeBuffer(bitMerger.getByte());
     }
   }
 
   public void pushByte(byte b) throws IOException {
-    if (bitIndex == 0) {
-      writeBuffer(b);
-    } else {
-      for (int i = 7; i >= 0; i--) {
-        pushBit((byte) ((b >> i) & 1));
-      }
-    }
+    bitMerger.pushByte(b);
+    writeBuffer(bitMerger.getByte());
   }
 
   public void close() throws IOException {
-    if (bitIndex > 0) {
-      currentByte <<= (8 - bitIndex);
-      writeBuffer(currentByte);
-    }
+    while (!bitMerger.isBuildInProgress()) bitMerger.pushBit((byte) 0);
+    while (bitMerger.hasByte()) writeBuffer(bitMerger.getByte());
     os.close();
   }
 
