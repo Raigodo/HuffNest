@@ -1,5 +1,6 @@
 package com.huffnest;
 
+import com.huffnest.ByteTree.TreePathDirection;
 import java.io.IOException;
 
 public class Main {
@@ -8,11 +9,21 @@ public class Main {
     BitReader br = new BitReader(
       "E:\\Projects\\huffnest\\src\\main\\resources\\test.txt"
     );
-    for (int i = 0; i < 8; i++) {
-      System.out.println("!: " + br.nextBit());
-    }
+
+    ByteTreeBuilder builder = new ByteTreeBuilder();
+
     while (!br.isClosed()) {
-      System.out.println("!: " + (char) br.nextByte());
+      builder.appendNextByte(br.nextByte());
     }
+
+    ByteTree tree = builder.build();
+
+    TreePathDirection[] path = tree.getPathToByte((byte) '4');
+
+    for (TreePathDirection direction : path) {
+      System.out.println(direction);
+    }
+
+    System.out.println((char) tree.getByteAtPath(path));
   }
 }
