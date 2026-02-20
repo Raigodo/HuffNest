@@ -69,12 +69,8 @@ public class HuffNestFile {
   }
 
   public void decompress() throws IOException {
-    BitReader br = new BitReader(
-      Paths.get("E:\\Projects\\huffnest\\src\\main\\resources\\test2")
-    );
-    BitWriter bw = new BitWriter(
-      Paths.get("E:\\Projects\\huffnest\\src\\main\\resources\\test3.txt")
-    );
+    BitReader br = new BitReader(inputFilePath);
+    BitWriter bw = new BitWriter(outputFilePath);
 
     int treeSize = br.nextInt();
     int iterationsLeft = br.nextInt();
