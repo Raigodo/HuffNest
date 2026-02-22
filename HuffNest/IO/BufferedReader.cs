@@ -9,6 +9,13 @@ public class BufferedReader
         readBuffer = new byte[BufferSize / 2];
     }
 
+    private const int BufferSize = 1024;
+
+    private FileStream fs;
+    private byte[] readBuffer;
+    private Queue<byte> queue = new();
+    private CancellationTokenSource cts = new();
+
     public long Count
     {
         get => queue.Count + fs.Length - fs.Position;
@@ -18,13 +25,6 @@ public class BufferedReader
     {
         get => fs.Position >= fs.Length && queue.Count <= 0;
     }
-
-    private const int BufferSize = 2;
-
-    private FileStream fs;
-    private byte[] readBuffer;
-    private Queue<byte> queue = new();
-    private CancellationTokenSource cts = new();
 
     public async Task<byte> ReadNext()
     {
