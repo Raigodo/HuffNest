@@ -1,15 +1,15 @@
 package com.huffnest;
 
 import com.huffnest.bytetree.ByteTree;
-import com.huffnest.bytetree.ByteTree.TreePathDirection;
 import com.huffnest.bytetree.ByteTreeFactory;
+import com.huffnest.bytetree.ByteTreePath;
+import com.huffnest.bytetree.ByteTreePath.ByteTreePathIterator;
 import com.huffnest.bytetree.ByteTreeSerializer;
 import com.huffnest.io.BitReader;
 import com.huffnest.io.BitWriter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 
 public class HuffNestFile {
 
@@ -36,9 +36,15 @@ public class HuffNestFile {
 
     ByteTree tree = builder.build();
 
+    System.out.println("Tree Built!");
+
     BitWriter bw = new BitWriter(outputFilePath);
 
+    System.out.println("Serializing Tree...");
+
     byte[] serializedTree = new ByteTreeSerializer().serialize(tree);
+
+    System.out.println("Tree Serialized!");
 
     bw.pushInt(serializedTree.length);
     bw.pushInt(iteration);
@@ -56,18 +62,16 @@ public class HuffNestFile {
 
     while (br.hasNextByte()) {
       byte b = br.nextByte();
-      TreePathDirection[] path = tree.getPathToByte(b);
+      ByteTreePathIterator pathIterator = tree.getPathToByte(b).iterator();
 
-      for (int i = 0; i < path.length; i++) {
-        bw.pushBit((byte) (path[i] == TreePathDirection.LEFT ? 0 : 1));
-        if (i == path.length - 1) {
-          bw.pushBit((byte) 1);
-        } else {
-          bw.pushBit((byte) 0);
-        }
+      while (pathIterator.hasNext()) {
+        bw.pushBit((byte) (pathIterator.nextIsLeft() ? 0 : 1));
       }
     }
-    bw.close();
+
+    byte pbc = bw.close();
+
+    System.out.println("File compressed!");
   }
 
   public void decompress() throws IOException {
@@ -86,25 +90,34 @@ public class HuffNestFile {
     ByteTree tree = new ByteTreeSerializer().deserialize(serializedTree);
 
     System.out.println("Decompressing file...");
-    writeLoop: while (br.hasNextBit()) {
-      List<TreePathDirection> path = new ArrayList<>();
-      while (true) {
-        if (!br.hasNextBit()) break writeLoop;
-        path.add(
-          br.nextBit() == 0 ? TreePathDirection.LEFT : TreePathDirection.RIGHT
-        );
-        if (!br.hasNextBit()) break writeLoop;
-        boolean isEndBit = br.nextBit() == 1 ? true : false;
-        if (isEndBit) {
-          break;
-        }
+    ByteTreePath path = ByteTreePath.empty();
+    while (br.hasNextBit()) {
+      if (!br.hasNextBit()) break;
+      path.pushDirectionBit(br.nextBit());
+      if (tree.hasByteAtPath(path)) {
+        bw.pushByte(tree.getByteAtPath(path));
+        path = ByteTreePath.empty();
       }
-      byte value;
-      value = tree.getByteAtPath(
-        (TreePathDirection[]) path.toArray(new TreePathDirection[0])
-      );
-      bw.pushByte(value);
     }
     bw.close();
+
+    //clean up messed up file end
+
+    path = ByteTreePath.empty();
+    byte paddingByteCount = 0;
+    for (int i = 0; i < 6; i++) {
+      path.pushDirectionBit((byte) 0);
+      if (tree.hasByteAtPath(path)) {
+        path = ByteTreePath.empty();
+        paddingByteCount++;
+      }
+    }
+
+    RandomAccessFile raf = new RandomAccessFile(outputFilePath.toFile(), "rw");
+    long length = raf.length();
+
+    long newLength = Math.max(0, length - paddingByteCount);
+    raf.setLength(newLength);
+    raf.close();
   }
 }

@@ -6,6 +6,10 @@ public class BitMerger {
   private byte currentByte = 0;
   private int bitIndex = 0;
 
+  public byte getPaddingBitCount() {
+    return (byte) (8 - bitIndex);
+  }
+
   public boolean isBuildInProgress() {
     return bitIndex == 0;
   }

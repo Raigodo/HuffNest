@@ -1,7 +1,7 @@
 package com.huffnest.bytetree;
 
+import com.huffnest.bytetree.ByteTreePath.ByteTreePathIterator;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,111 +10,157 @@ public class ByteTree {
 
   public ByteTree(ByteTreeNode root) {
     this.root = root;
-    buildNavigationMap(new TreePathDirection[0], root);
+    buildNavigationMap(ByteTreePath.empty(), root);
   }
 
   private ByteTreeNode root;
-  private Map<Byte, TreePathDirection[]> navigationMap = new HashMap<>();
+  private Map<Byte, ByteTreePath> navigationMap = new HashMap<>();
 
-  public BreadthFirstByteTreeIterator getIterator() {
-    return new BreadthFirstByteTreeIterator(root);
+  public ByteTreeIterator getIterator() {
+    return new ByteTreeIterator(root);
   }
 
-  public ManualBreadthFirstByteTreeIterator getManualIterator() {
-    return new ManualBreadthFirstByteTreeIterator(root);
+  public ControlledByteTreeIterator getControlledIterator() {
+    return new ControlledByteTreeIterator(root);
   }
 
-  public TreePathDirection[] getPathToByte(byte value) {
+  public ByteTreePath getPathToByte(byte value) {
     return navigationMap.get(value);
   }
 
-  public byte getByteAtPath(TreePathDirection[] path) {
+  public boolean hasByteAtPath(ByteTreePath path) {
     ByteTreeNode current = root;
-
-    for (TreePathDirection direction : path) {
-      if (direction == TreePathDirection.LEFT) current = current.left;
-      else current = current.right;
+    ByteTreePathIterator pathIterator = path.iterator();
+    while (pathIterator.hasNext()) {
+      if (pathIterator.nextIsLeft() && current.left != null) {
+        current = current.left;
+        continue;
+      }
+      if (current.right != null) {
+        current = current.right;
+        continue;
+      }
+      return false;
     }
+    return current.left == null && current.right == null;
+  }
 
+  public byte getByteAtPath(ByteTreePath path) {
+    ByteTreeNode current = root;
+    ByteTreePathIterator pathIterator = path.iterator();
+    while (pathIterator.hasNext()) {
+      if (pathIterator.nextIsLeft() && current.left != null) {
+        current = current.left;
+      } else if (current.right != null) {
+        current = current.right;
+      } else {
+        throw new RuntimeException("Invalid path: reached a null node");
+      }
+    }
     return current.value;
   }
 
-  public void rebuildnavigationMap() {
+  public void print() {
+    for (Map.Entry<Byte, ByteTreePath> entry : navigationMap.entrySet()) {
+      System.out.println(
+        (char) entry.getKey().intValue() + ": " + entry.getValue().toString()
+      );
+    }
+  }
+
+  public void rebuildNavigationMap() {
     navigationMap.clear();
-    buildNavigationMap(new TreePathDirection[0], root);
+    buildNavigationMap(ByteTreePath.empty(), root);
   }
 
   private void buildNavigationMap(
-    TreePathDirection[] currentPath,
+    ByteTreePath currentPath,
     ByteTreeNode current
   ) {
-    if (currentPath.length > 0) {
+    if (current.left == null || current.right == null) {
       navigationMap.put(current.value, currentPath);
     }
 
     if (current.left != null) {
-      TreePathDirection[] childPath = Arrays.copyOf(
-        currentPath,
-        currentPath.length + 1
-      );
-      childPath[childPath.length - 1] = TreePathDirection.LEFT;
+      ByteTreePath childPath = currentPath.copy();
+      childPath.pushLeft();
       buildNavigationMap(childPath, current.left);
     }
     if (current.right != null) {
-      TreePathDirection[] childPath = Arrays.copyOf(
-        currentPath,
-        currentPath.length + 1
-      );
-      childPath[childPath.length - 1] = TreePathDirection.RIGHT;
+      ByteTreePath childPath = currentPath.copy();
+      childPath.pushRight();
       buildNavigationMap(childPath, current.right);
     }
   }
 
-  public enum TreePathDirection {
-    LEFT,
-    RIGHT,
-  }
+  public class ByteTreeIterator {
 
-  public class BreadthFirstByteTreeIterator {
-
-    public BreadthFirstByteTreeIterator(ByteTreeNode root) {
-      this.currentLevelNodes = new ByteTreeNode[] { root.left, root.right };
+    public ByteTreeIterator(ByteTreeNode root) {
+      previous = root;
+      next = null;
     }
 
-    private ByteTreeNode[] currentLevelNodes;
-    private int index = 0;
-    private List<ByteTreeNode> nextLevelNodes = new ArrayList<>();
+    private ByteTreeNode previous;
+    private ByteTreeNode next;
 
     public boolean hasNext() {
-      return (
-        (currentLevelNodes.length > 0 && index < currentLevelNodes.length) ||
-        nextLevelNodes.size() > 0
-      );
+      if (next == null) next = recursiveGetNextNode(previous);
+      return next != null;
     }
 
     public ByteTreeNode nextNode() {
-      ByteTreeNode node = currentLevelNodes[index++];
-
-      if (node.left != null) nextLevelNodes.add(node.left);
-      if (node.right != null) nextLevelNodes.add(node.right);
-
-      if (index >= currentLevelNodes.length) {
-        currentLevelNodes = nextLevelNodes.toArray(new ByteTreeNode[0]);
-        nextLevelNodes.clear();
-        index = 0;
+      if (next == null) {
+        next = recursiveGetNextNode(previous);
       }
-
-      return node;
+      if (next == null) throw new RuntimeException("No more nodes in tree");
+      previous = next;
+      next = null;
+      return previous;
     }
 
-    public byte nextValue() {
-      return nextNode().value;
+    private ByteTreeNode recursiveGetNextNode(ByteTreeNode current) {
+      if (current == null) return null;
+
+      if (
+        current != previous && current.right == null && current.left == null
+      ) {
+        return current;
+      }
+
+      if (current.left != null && current.left != previous) {
+        return recursiveGetNextNode(current.left);
+      }
+
+      if (
+        current == previous &&
+        current.right == null &&
+        current.left == null &&
+        current.parent != null &&
+        current.parent.right != current
+      ) {
+        return current.parent.right;
+      }
+
+      if (
+        current.parent != null &&
+        current.parent.parent != null &&
+        root.right != current.parent
+      ) {
+        previous = current.parent;
+        return recursiveGetNextNode(current.parent.parent);
+      }
+
+      if (current.right != null && current.right != previous) {
+        return recursiveGetNextNode(current.right);
+      }
+
+      return null;
     }
   }
 
-  public class ManualBreadthFirstByteTreeIterator {
+  public class ControlledByteTreeIterator {
 
-    public ManualBreadthFirstByteTreeIterator(ByteTreeNode root) {
+    public ControlledByteTreeIterator(ByteTreeNode root) {
       this.currentLevelNodes = new ByteTreeNode[] { root };
     }
 

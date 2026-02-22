@@ -35,10 +35,13 @@ public class BitWriter {
     pushByte((byte) value);
   }
 
-  public void close() throws IOException {
+  public byte close() throws IOException {
+    byte paddingBitCount = bitMerger.getPaddingBitCount();
+
     while (!bitMerger.isBuildInProgress()) bitMerger.pushBit((byte) 0);
     while (bitMerger.hasByte()) writeBuffer(bitMerger.getByte());
     os.close();
+    return paddingBitCount;
   }
 
   private void writeBuffer(byte b) throws IOException {

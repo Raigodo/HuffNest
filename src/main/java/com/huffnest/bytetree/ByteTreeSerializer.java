@@ -1,21 +1,19 @@
 package com.huffnest.bytetree;
 
+import com.huffnest.bytetree.ByteTree.ByteTreeIterator;
 import com.huffnest.bytetree.ByteTreeFactory.ByteTreeBuilder;
-import com.huffnest.util.BitMerger;
 import java.io.ByteArrayOutputStream;
 
 public class ByteTreeSerializer {
 
-  private BitMerger bitMerger = new BitMerger();
-
   public byte[] serialize(ByteTree tree) {
     ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-    ByteTree.BreadthFirstByteTreeIterator iterator = tree.getIterator();
+    ByteTreeIterator iterator = tree.getIterator();
 
     while (iterator.hasNext()) {
-      byte value = iterator.nextValue();
-      bitMerger.pushByte(value);
-      byteArrayStream.write(bitMerger.getByte());
+      ByteTreeNode node = iterator.nextNode();
+      byteArrayStream.write(node.value);
+      byteArrayStream.write(node.level);
     }
 
     return byteArrayStream.toByteArray();
@@ -24,8 +22,10 @@ public class ByteTreeSerializer {
   public ByteTree deserialize(byte[] data) {
     ByteTreeBuilder builder = ByteTreeFactory.Existing();
 
-    for (byte b : data) {
-      builder.pushByte(b);
+    for (int i = 0; i < data.length; i += 2) {
+      byte value = data[i];
+      byte level = data[i + 1];
+      builder.pushByte(value, level);
     }
 
     return builder.build();
