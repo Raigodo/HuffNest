@@ -59,8 +59,6 @@ public partial class Tree
             }
         }
 
-        Console.WriteLine("seek " + path + " ; got " + currentNode.Value);
-
         if (currentNode.Left == null)
         {
             value = currentNode.Value;

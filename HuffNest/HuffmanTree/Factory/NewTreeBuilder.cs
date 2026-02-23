@@ -7,13 +7,24 @@ public class NewTreeBuilder
 {
     private Dictionary<byte, long> frequencyMap = new();
 
+    int xxx1 = 0;
+    int xxx2 = 0;
+
     public void PushByte(byte value)
     {
+        xxx1++;
+        if (xxx1 >= 1000000)
+        {
+            xxx1 = 0;
+            xxx2++;
+            Console.WriteLine(xxx2 + " 000 000");
+        }
         frequencyMap[value] = frequencyMap.GetValueOrDefault(value, 0) + 1;
     }
 
     public Tree Build()
     {
+        Console.WriteLine("Assemblinh Tree Together...");
         var keys = frequencyMap.OrderByDescending(x => x.Value).Select(x => x.Key).ToArray();
         if (keys == null)
             throw new Exception("Empty tree makes no sense");
@@ -32,12 +43,17 @@ public class NewTreeBuilder
         return new Tree(root);
     }
 
+    private int x = 0;
+
     private void CraftVirtualBranch(VirtualNode node, byte[] orderedKeys)
     {
         if (orderedKeys.Length == 0)
             return;
         if (orderedKeys.Length == 1)
         {
+            Console.WriteLine("Leaf created " + x);
+
+            x++;
             node.Value = orderedKeys[0];
             return;
         }

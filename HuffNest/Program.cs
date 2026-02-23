@@ -1,9 +1,9 @@
 ﻿await new HuffNestFile(
-    "E:\\Projects\\huffnest\\test.txt",
-    "E:\\Projects\\huffnest\\temp.txt"
+    "C:\\Users\\valte\\Desktop\\test1\\test1.pdf",
+    "C:\\Users\\valte\\Desktop\\test1\\temp"
 ).Compress(1);
 
 await new HuffNestFile(
-    "E:\\Projects\\huffnest\\temp.txt",
-    "E:\\Projects\\huffnest\\test2.txt"
+    "C:\\Users\\valte\\Desktop\\test1\\temp",
+    "C:\\Users\\valte\\Desktop\\test1\\30mb_my.pdf"
 ).Decompress();

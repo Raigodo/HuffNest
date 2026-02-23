@@ -23,15 +23,6 @@ public class HuffNestFile(string inputFilePath, string outputFilePath)
 
         Tree tree = treeBuilder.Build();
 
-        byte x = (byte)'1';
-        for (int i = 0; i < 6; i++)
-        {
-            tree.TryGetPathToByte(x, out var pth);
-            tree.TryGetByteAtPath(pth, out var b);
-            x++;
-            Console.WriteLine((char)b + "/" + b + " - " + pth);
-        }
-
         Console.WriteLine("Tree Built!");
 
         BitWriter bw = new BitWriter(outputFilePath);
@@ -64,7 +55,6 @@ public class HuffNestFile(string inputFilePath, string outputFilePath)
             byte b = await br.GetNextByteAsync();
             if (tree.TryGetPathToByte(b, out TreePath path))
             {
-                Console.WriteLine("compress " + (char)b + "/" + b + " to " + path);
                 foreach (Bit bit in path.GetEnumerator())
                 {
                     await bw.WriteBitAsync(bit);
