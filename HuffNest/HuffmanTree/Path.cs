@@ -6,12 +6,6 @@ namespace HuffmanTree;
 
 public record struct TreePath
 {
-    public TreePath(BitArray steps)
-    {
-        Id = new(0);
-        this.steps = steps;
-    }
-
     public TreePath(PathId pathId, BitArray steps)
     {
         Id = pathId;

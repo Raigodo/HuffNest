@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using Util;
 
 namespace IO;
@@ -19,22 +20,22 @@ public class BitReader
 
     public bool HasNextBit
     {
-        get => bitSplitter.HasNextBit || bitSplitter.WholeByteCount + reader.Count > 1;
+        get => bitSplitter.HasNextBit || bitSplitter.WholeByteCount + reader.Count >= 1;
     }
     public bool HasNextByte
     {
-        get => bitSplitter.HasNextByte || bitSplitter.WholeByteCount + reader.Count > 1;
+        get => bitSplitter.HasNextByte || bitSplitter.WholeByteCount + reader.Count >= 1;
     }
     public bool HasNextInt
     {
-        get => bitSplitter.HasNextInt || bitSplitter.WholeByteCount + reader.Count > 4;
+        get => bitSplitter.HasNextInt || bitSplitter.WholeByteCount + reader.Count >= 4;
     }
 
     public async Task<Bit> GetNextBitAsync()
     {
         if (!bitSplitter.HasNextBit)
         {
-            await FillBitSplitterQueue((int)Math.Min(reader.Count, 1));
+            await FillBitSplitterQueue(1 - bitSplitter.WholeByteCount);
             if (!bitSplitter.HasNextByte)
             {
                 throw new Exception("no more bits");
@@ -47,7 +48,7 @@ public class BitReader
     {
         if (!bitSplitter.HasNextByte)
         {
-            await FillBitSplitterQueue((int)Math.Min(reader.Count, 2));
+            await FillBitSplitterQueue(1 - bitSplitter.WholeByteCount);
             if (!bitSplitter.HasNextByte)
             {
                 throw new Exception("no more bytes");
@@ -60,7 +61,7 @@ public class BitReader
     {
         if (!bitSplitter.HasNextInt)
         {
-            await FillBitSplitterQueue((int)Math.Min(reader.Count, 5));
+            await FillBitSplitterQueue(4 - bitSplitter.WholeByteCount);
             if (!bitSplitter.HasNextByte)
             {
                 throw new Exception("no more integers");

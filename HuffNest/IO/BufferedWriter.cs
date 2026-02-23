@@ -4,13 +4,13 @@ public class BufferedWriter
 {
     public BufferedWriter(string path)
     {
-        writer = new(path);
+        writer = new(File.Open(path, FileMode.Create));
         buffer = new byte[WriteBufferSize];
     }
 
     private const int WriteBufferSize = 1024;
 
-    private StreamWriter writer;
+    private BinaryWriter writer;
     private byte[] buffer;
     private int index = 0;
     private CancellationTokenSource cts = new();
@@ -40,12 +40,17 @@ public class BufferedWriter
 
     public async Task Flush(CancellationToken ct = default)
     {
-        for (int i = 0; i < index; i++)
+        if (index == buffer.Length)
         {
-            if (ct.IsCancellationRequested)
-                break;
-            writer.Write((char)buffer[i]);
+            writer.Write(buffer);
         }
+        else if (index > 0)
+        {
+            byte[] toWrite = new byte[index];
+            Array.Copy(buffer, toWrite, index);
+            writer.Write(toWrite);
+        }
+        writer.Flush();
         index = 0;
     }
 

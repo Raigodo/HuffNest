@@ -19,7 +19,8 @@ public record struct UnknownPath
 
     public void PushBit(Bit bit)
     {
-        steps.Set(index++, bit.Value == 0 ? false : true);
+        var bitValue = bit.Value == 0 ? false : true;
+        steps.Set(index++, bitValue);
     }
 
     public void Reset()
@@ -40,7 +41,7 @@ public record struct UnknownPath
     public override string ToString()
     {
         StringBuilder sb = new();
-        for (int i = 0; i < steps.Count; i++)
+        for (int i = 0; i < index; i++)
         {
             sb.Append(steps.Get(i) ? "R" : "L");
         }

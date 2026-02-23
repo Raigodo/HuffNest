@@ -25,7 +25,7 @@ public partial class Tree
         {
             if (node.Left == null)
             {
-                var pathId = new TreePath.PathId();
+                var pathId = new TreePath.PathId(i++);
                 pathToByteMap[node.Value] = new TreePath(pathId, node.Steps);
                 byteAtPathMap[pathId] = node.Value;
             }
@@ -58,6 +58,8 @@ public partial class Tree
                 currentNode = currentNode.Right;
             }
         }
+
+        Console.WriteLine("seek " + path + " ; got " + currentNode.Value);
 
         if (currentNode.Left == null)
         {
