@@ -6,11 +6,11 @@ public partial class Tree
     {
         byteAtPathMap = new();
         pathToByteMap = new();
-        Root = root;
+        this.root = root;
         ReevaluateMaps();
     }
 
-    public Node Root { get; init; }
+    private Node root;
     private Dictionary<TreePath.PathId, byte> byteAtPathMap;
     private Dictionary<byte, TreePath> pathToByteMap;
 
@@ -20,11 +20,12 @@ public partial class Tree
         byteAtPathMap.Clear();
 
         var iterator = GetIterator();
+        byte i = 1;
         foreach (Node node in iterator)
         {
             if (node.Left == null)
             {
-                TreePath.PathId pathId = new TreePath.PathId(node.Value);
+                var pathId = new TreePath.PathId();
                 pathToByteMap[node.Value] = new TreePath(pathId, node.Steps);
                 byteAtPathMap[pathId] = node.Value;
             }
@@ -41,7 +42,33 @@ public partial class Tree
         return byteAtPathMap.TryGetValue(path.Id, out value);
     }
 
-    public IEnumerable<Node> GetIterator() => TraverseInOrder(Root);
+    public bool TryGetByteAtPath(UnknownPath path, out byte value)
+    {
+        Node currentNode = root;
+        foreach (var bit in path.GetEnumerator())
+        {
+            if (currentNode.Left == null)
+                throw new Exception("Invalid tree structure");
+            if (bit.IsZero && currentNode.Left != null)
+            {
+                currentNode = currentNode.Left;
+            }
+            if (bit.IsOne && currentNode.Right != null)
+            {
+                currentNode = currentNode.Right;
+            }
+        }
+
+        if (currentNode.Left == null)
+        {
+            value = currentNode.Value;
+            return true;
+        }
+        value = default;
+        return false;
+    }
+
+    public IEnumerable<Node> GetIterator() => TraverseInOrder(root);
 
     private static IEnumerable<Node> TraverseInOrder(Node? root)
     {

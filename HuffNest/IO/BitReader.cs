@@ -34,7 +34,11 @@ public class BitReader
     {
         if (!bitSplitter.HasNextBit)
         {
-            await FillBitSplitterQueue(1);
+            await FillBitSplitterQueue((int)Math.Min(reader.Count, 1));
+            if (!bitSplitter.HasNextByte)
+            {
+                throw new Exception("no more bits");
+            }
         }
         return bitSplitter.NextBit();
     }
@@ -43,16 +47,24 @@ public class BitReader
     {
         if (!bitSplitter.HasNextByte)
         {
-            await FillBitSplitterQueue(1);
+            await FillBitSplitterQueue((int)Math.Min(reader.Count, 2));
+            if (!bitSplitter.HasNextByte)
+            {
+                throw new Exception("no more bytes");
+            }
         }
         return bitSplitter.NextByte();
     }
 
-    public async Task<(bool success, int value)> NextIntAsync()
+    public async Task<int> NextIntAsync()
     {
-        if (!bitSplitter.HasNextByte)
+        if (!bitSplitter.HasNextInt)
         {
-            await FillBitSplitterQueue(3);
+            await FillBitSplitterQueue((int)Math.Min(reader.Count, 5));
+            if (!bitSplitter.HasNextByte)
+            {
+                throw new Exception("no more integers");
+            }
         }
 
         int b1 = bitSplitter.NextByte();
@@ -60,7 +72,7 @@ public class BitReader
         int b3 = bitSplitter.NextByte();
         int b4 = bitSplitter.NextByte();
 
-        return (true, (b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+        return (b1 << 24) | (b2 << 16) | (b3 << 8) | b4;
     }
 
     private async Task FillBitSplitterQueue(int count)

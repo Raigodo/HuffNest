@@ -9,7 +9,7 @@ public class BitSplitter
 
     public int WholeByteCount
     {
-        get => queue.Count + (bitIndex == 0 ? 1 : 0);
+        get => queue.Count + (isCurrentByteActive && bitIndex == 0 ? 1 : 0);
     }
 
     public bool HasNextBit

@@ -45,16 +45,19 @@ public class BitWriter
         await writer.Write(b);
     }
 
-    public async Task CloseAsync()
+    public async Task<byte> CloseAsync()
     {
+        byte pbc = 0;
         if (bitMerger.ByteInProgress)
         {
             while (!bitMerger.ByteReady)
             {
+                pbc++;
                 bitMerger.PushBit(new());
             }
             await writer.Write(bitMerger.GetByte());
         }
         await writer.CloseAsync();
+        return pbc;
     }
 }
